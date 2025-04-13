@@ -9,7 +9,7 @@ The epanet model currently contains:
 
 # Neural network
 - convolutional neural network
-- the flow and pressure sensors as inputs
+- the  4 flow and 4 pressure sensors as inputs
 - tanh as activation function -> unsure about negative flows and pressure
 - output at first consumer 1 (2 nodes: 1 for pressure and 1 for flow)
 

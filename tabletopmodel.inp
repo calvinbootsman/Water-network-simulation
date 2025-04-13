@@ -35,24 +35,25 @@
 
 [PIPES]
 ;ID              	Node1           	Node2           	Length      	Diameter    	Roughness   	MinorLoss   	Status
- 2               	3               	2               	0.16        	26         	140       	0           	Open  	;
- 5               	5               	6               	0.65        	26         	140       	0           	Open  	;
- 8               	5               	4               	0.72        	26         	140       	0           	Open  	;
- 9               	6               	8               	0.7         	26         	140       	0           	Open  	;
- 15              	4               	10              	1           	26         	140       	0           	Open  	;
- 18              	11              	2               	0.51        	26         	140       	0           	Open  	;
- 21              	9               	3               	0.6         	26         	140       	0           	Open  	;
- 23              	13              	5               	0.15        	26         	140       	0           	Open  	;
- 24              	14              	13              	0.2         	26         	140       	0           	Open  	;
- 25              	15              	14              	0.2         	26         	140       	0           	Open  	;
- 50              	16              	15              	0.65        	26         	140       	0           	Open  	;
- 28              	17              	18              	0.18        	26         	140       	0           	Open  	;
- 30              	20              	15              	0.7         	26         	140       	0           	Open  	;
- 32              	22              	21              	0.25        	26         	140       	0           	Open  	;
- 33              	22              	17              	0.63        	26         	140       	0           	Open  	;
- 34              	23              	22              	0.45        	26         	140       	0           	Open  	;
- 35              	24              	23              	1.67        	26         	140       	0           	Open  	;
- 1               	2               	7               	1.1         	26          140       	0           	Open  	;
+ 2               	3               	2               	0.16        	26          	140         	0           	Open  	;
+ 5               	5               	6               	0.65        	26          	140         	0           	Open  	;
+ 8               	5               	4               	0.72        	26          	140         	0           	Open  	;
+ 9               	6               	8               	0.7         	26          	140         	0           	Open  	;
+ 15              	4               	10              	1           	26          	140         	0           	Open  	;
+ 18              	11              	2               	0.51        	26          	140         	0           	Open  	;
+ 21              	9               	3               	0.6         	26          	140         	0           	Open  	;
+ 23              	13              	5               	0.15        	26          	140         	0           	Open  	;
+ 24              	14              	13              	0.2         	26          	140         	0           	Open  	;
+ 25              	15              	14              	0.2         	26          	140         	0           	Open  	;
+ 50              	16              	15              	0.65        	26          	140         	0           	Open  	;
+ 28              	17              	18              	0.18        	26          	140         	0           	Open  	;
+ 30              	20              	15              	0.7         	26          	140         	0           	Open  	;
+ 32              	22              	21              	0.25        	26          	140         	0           	Open  	;
+ 33              	22              	17              	0.63        	26          	140         	0           	Open  	;
+ 34              	23              	22              	0.45        	26          	140         	0           	Open  	;
+ 35              	24              	23              	1.67        	26          	140         	0           	Open  	;
+ 1               	2               	7               	1.1         	26          	140         	0           	Open  	;
+ 3               	27              	7               	1           	26          	140         	0           	Open  	;
 
 [PUMPS]
 ;ID              	Node1           	Node2           	Parameters
@@ -75,19 +76,13 @@
 
 [STATUS]
 ;ID              	Status/Setting
- 16              	Open
- 19              	Open
- 22              	Open
- 27              	Closed
- 31              	Open
- 39              	Closed
 
 [PATTERNS]
 ;ID              	Multipliers
 
 [CURVES]
 ;ID              	X-Value     	Y-Value
-;PUMP: PUMP: PUMP: 
+;PUMP: PUMP: PUMP: PUMP: PUMP: 
  1               	0           	5           
  1               	1.0         	3.5         
  1               	2.08        	0           
@@ -96,7 +91,11 @@
 
 
 
+
+
 [RULES]
+
+
 
 
 
