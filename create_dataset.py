@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
 #%%
     # Save results to CSV
-    csv_header = ['valve_19', 'valve_22', 'valve_16', 'valve_27', 'valve_31', 'flow_35', 'flow_33', 'flow_5', 'flow_18', 'flow_9',
+    csv_header = ['valve_19', 'valve_22', 'valve_16', 'valve_27', 'valve_31', 'valve_39','flow_35', 'flow_33', 'flow_5', 'flow_18', 'flow_9',
                 'pressure_22', 'pressure_15', 'pressure_4', 'pressure_3', 'pressure_8']
     results_array = [[None] * len(csv_header) for _ in range(len(results))]
     for i in range(len(results)):
@@ -123,16 +123,17 @@ if __name__ == "__main__":
         results_array[i][2] = results[i][0][2]
         results_array[i][3] = results[i][0][3]
         results_array[i][4] = results[i][0][4]
-        results_array[i][5] = results[i][1][0][0]
-        results_array[i][6] = results[i][1][0][1]
-        results_array[i][7] = results[i][1][0][2]
-        results_array[i][8] = results[i][1][0][3]
-        results_array[i][9] = results[i][1][0][4]
-        results_array[i][10] = results[i][1][1][0]
-        results_array[i][11] = results[i][1][1][1]
-        results_array[i][12] = results[i][1][1][2]
-        results_array[i][13] = results[i][1][1][3]
-        results_array[i][14] = results[i][1][1][-1]
+        results_array[i][5] = results[i][0][5]
+        results_array[i][6] = results[i][1][0][0] * 1000 
+        results_array[i][7] = results[i][1][0][1] * 1000
+        results_array[i][8] = results[i][1][0][2] * 1000
+        results_array[i][9] = results[i][1][0][3] * 1000
+        results_array[i][10] = results[i][1][0][4] * 1000
+        results_array[i][11] = results[i][1][1][0]
+        results_array[i][12] = results[i][1][1][1]
+        results_array[i][13] = results[i][1][1][2]
+        results_array[i][14] = results[i][1][1][3]
+        results_array[i][15] = results[i][1][1][-1]
 
         output_csv_file = "simulation_results.csv"
 
