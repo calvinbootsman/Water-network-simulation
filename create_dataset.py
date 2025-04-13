@@ -66,8 +66,27 @@ def run_simulation_for_combination(settings_combination, hours=1):
         return (settings_combination, None) # Indicate failure
 
 # 1. Generate all combinations using itertools.product
-def main(num_processes=1, hours=1):
+def main(num_processes=1, hours=1, random_combinations=1_000_000):
     all_combinations = list(itertools.product(valve_setting_options, repeat=len(valve_ids_to_modify)))
+    additional_combinations = []
+    for i in range(random_combinations):
+        new_valve_settings = []
+        for j in range(len(valve_ids_to_modify)):     
+
+            if np.random.rand() < 0.1:
+                new_valve_settings.append('closed')
+            else:
+                index = np.random.randint(0, len(valve_setting_options)-2)
+                start_value = valve_setting_options[index]
+                end_value = valve_setting_options[index + 1]
+                if index == len(valve_setting_options)-2:
+                    end_value = 250
+                
+                
+                new_valve_settings.append(np.random.uniform(start_value, end_value))
+        additional_combinations.append(tuple(new_valve_settings))
+    all_combinations += additional_combinations
+
     total_simulations = len(all_combinations)
     print(f"Generated {total_simulations} simulation combinations.")
 
