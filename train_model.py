@@ -93,6 +93,34 @@ for epoch in range(epochs):
         average_loss /= len(val_loader)
         print(f"Validation Loss: {average_loss}")
 
+#%%
+# Calculate accuracy on the training set
+model.eval()
+correct_predictions = 0
+total_predictions = 0
+MAE = []
+with torch.no_grad():
+    for batch in test_loader:
+        x, y = batch
+        x, y = x.to(device), y.to(device)
+
+        predictions = model(x)
+        # Calculate Mean Absolute Error (MAE)
+        MAE.append(torch.mean(torch.abs(predictions - y)).item())
+
+        # predicted_labels = predictions.round()  # Round predictions to nearest integer
+        # correct_predictions += (predicted_labels == y).all(dim=1).sum().item()
+        # total_predictions += y.size(0)
+
+average_MAE = sum(MAE) / len(MAE)
+print(f"Average MAE on training set: {average_MAE}")
+print(f'Precision: {100.00 - (average_MAE * 100.00):.2f}%')
+#%%
+# Save the trained model
+model_save_path = f"models/trained_model_{average_MAE}.pth"
+torch.save(model.state_dict(), model_save_path)
+print(f"Model saved to {model_save_path}")
+
 # %%
 input_dataset = simulation_results[['flow_35', 'flow_33', 'flow_5', 'flow_18', 'pressure_22', 'pressure_15', 'pressure_4', 'pressure_3']].values
 output_dataset = simulation_results[['flow_9', 'pressure_8']].values
