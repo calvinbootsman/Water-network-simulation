@@ -7,6 +7,8 @@ import multiprocessing
 import os
 import itertools
 import csv
+from datetime import datetime
+
 inp_file = 'tabletopmodel.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
 
@@ -17,8 +19,15 @@ measureble_links = ['35', '33', '5', '18', '9']
 valve_ids_to_modify = ['19', '22', '16', '27', '31', '39']
 valve_setting_options = [0.01, 0.2, 1.0, 8, 50, 200, 'closed'] # Valve open: 100%, 80%, 60%, 40%, 20%, 10%, 0%
 
-def run_simulation(wn, hours=1):
-    sim = wntr.sim.WNTRSimulator(wn)
+node_ids_to_modify = ['27']
+base_demand_values = [0.0, 0.2, 0.5, 0.8 , 1.0, 1.2]
+ids_to_modify = valve_ids_to_modify + node_ids_to_modify
+
+ids_to_modify = ['v'+x for x in valve_ids_to_modify] + ['n'+x for x in node_ids_to_modify]
+
+#start at 17.31
+def run_simulation(wn_copy, hours=2):
+    sim = wntr.sim.EpanetSimulator(wn_copy)
     results = sim.run_sim()
     flows = results.link['flowrate'].loc[hours*3600, :]    
     pressures = results.node['pressure'].loc[hours*3600, :]
@@ -46,15 +55,37 @@ def run_simulation_for_combination(settings_combination, hours=1):
         # 1. Create a deep copy *within* the worker process
         # This is crucial for isolation between parallel runs.
         wn.reset_initial_values()
-        # 2. Apply the settings for this specific combination
-        for valve_id, setting in zip(valve_ids_to_modify, settings_combination):
-            if setting == 'closed':
-                wn.get_link(valve_id).initial_status = wntr.network.LinkStatus.Closed
-            else:
-                # Ensure the link is treated as open if not 'closed'
-                wn.get_link(valve_id).initial_status = wntr.network.LinkStatus.Active # Or relevant Open status
-                wn.get_link(valve_id).initial_setting = setting
+        # wn_copy = copy.deepcopy(wn)
+        # node = wn_copy.get_node('2')
+        # # node.add_leak(wn_copy, area = 0.05, start_time=1, end_time=3600*hours)
+        # print(f"Process {os.getpid()}: BEFORE add_leak - Node '2' exists: {node is not None}")
+        # # Make sure the node is what we expect (Junction ideally)
+        # print(f"Process {os.getpid()}: Node '2' type: {type(node)}")
+        # print(f"Process {os.getpid()}: Node '2' initial leak_status: {getattr(node, 'leak_status', 'Not Set')}")
+        # print(f"Process {os.getpid()}: Node '2' initial emitter_coefficient: {getattr(node, 'emitter_coefficient', 'Not Set')}")
 
+
+        # # === THE CALL ===
+        # node.add_leak(wn_copy, area=0.5, start_time=1, end_time=3600*hours)
+        # # ================
+
+        # print(f"Process {os.getpid()}: AFTER add_leak - Node '2' leak_status: {getattr(node, 'leak_status', 'Not Set')}")
+        # print(f"Process {os.getpid()}: Node '2' leak_area: {getattr(node, 'leak_area', 'Not Set')}")
+        # print(f"Process {os.getpid()}: Node '2' emitter_coefficient after add_leak: {getattr(node, 'emitter_coefficient', 'Not Set')}")
+
+        # print(f"Process {os.getpid()}: CONTROLS in wn_copy:")
+        # 2. Apply the settings for this specific combination
+        for id, setting in zip(ids_to_modify, settings_combination):
+            id_number = id[1:]
+            if id[0] == 'v':                
+                if setting == 'closed':
+                    wn.get_link(id_number).initial_status = wntr.network.LinkStatus.Closed
+                else:
+                    # Ensure the link is treated as open if not 'closed'
+                    wn.get_link(id_number).initial_status = wntr.network.LinkStatus.Active # Or relevant Open status
+                    wn.get_link(id_number).initial_setting = setting
+            elif id[0] == 'n':
+                wn.get_node(id_number).demand_timeseries_list[0].base_demand = setting
         # 3. Run the simulation
         result = run_simulation(wn, hours)
         # 4. Return the input settings along with the result for tracking
@@ -67,29 +98,48 @@ def run_simulation_for_combination(settings_combination, hours=1):
 
 # 1. Generate all combinations using itertools.product
 def main(num_processes=1, hours=1, random_combinations=1_000_000):
-    all_combinations = list(itertools.product(valve_setting_options, repeat=len(valve_ids_to_modify)))
+    all_valve_combinations = list(itertools.product(valve_setting_options, repeat=len(valve_ids_to_modify)))
+    all_node_combinations = list(itertools.product(base_demand_values, repeat=len(node_ids_to_modify)))
+    all_combinations = list(itertools.product(all_valve_combinations, all_node_combinations))
+    all_combinations = [valve_comb + node_comb for valve_comb, node_comb in all_combinations]
+
     additional_combinations = []
     for i in range(random_combinations):
-        new_valve_settings = []
-        for j in range(len(valve_ids_to_modify)):     
-
-            if np.random.rand() < 0.1:
-                new_valve_settings.append('closed')
+        new_settings = []
+        for j in range(len(ids_to_modify)):    
+            if j < len(valve_ids_to_modify):
+                if np.random.rand() < 0.1:
+                    new_settings.append('closed')
+                else:
+                    index = np.random.randint(0, len(valve_setting_options)-2)
+                    start_value = valve_setting_options[index]
+                    end_value = valve_setting_options[index + 1]
+                    if index == len(valve_setting_options)-2:
+                        end_value = 250
+                    new_settings.append(np.random.uniform(start_value, end_value))    
             else:
-                index = np.random.randint(0, len(valve_setting_options)-2)
-                start_value = valve_setting_options[index]
-                end_value = valve_setting_options[index + 1]
-                if index == len(valve_setting_options)-2:
-                    end_value = 250
+                start_value = base_demand_values[0]
+                end_value = base_demand_values[-1]   
                 
-                
-                new_valve_settings.append(np.random.uniform(start_value, end_value))
-        additional_combinations.append(tuple(new_valve_settings))
+                new_settings.append(np.random.uniform(start_value, end_value))
+        additional_combinations.append(tuple(new_settings))
     all_combinations += additional_combinations
 
     total_simulations = len(all_combinations)
-    print(f"Generated {total_simulations} simulation combinations.")
 
+    print(f"Generated {total_simulations} simulation combinations.")
+    
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+    #     futures = {executor.submit(run_simulation_for_combination, combo): combo for combo in all_combinations}
+    #     for i, future in enumerate(concurrent.futures.as_completed(futures), start=1):
+    #         try:
+    #             result_tuple = future.result()
+    #             results.append(result_tuple)
+
+    #             if i % 1000 == 0:
+    #                  print(f"Processed combination {i}/{total_simulations}")
+    #         except Exception as e:       
+    #             print(f"Error processing future for combination: {e}") 
     # 2. Create the pool and map the worker function to the combinations
     with multiprocessing.Pool(processes=num_processes) as pool:
         # pool.map applies 'run_simulation_for_combination' to each item
@@ -97,7 +147,7 @@ def main(num_processes=1, hours=1, random_combinations=1_000_000):
         # It blocks until all results are back.
         results = []
         for i, result in enumerate(pool.imap_unordered(run_simulation_for_combination, all_combinations, hours), start=1):
-            if i%100 == 0:
+            if i%1000 == 0:
                 print(f"Processed combination {i}/{total_simulations}")
             results.append(result)
 
@@ -129,13 +179,17 @@ if __name__ == "__main__":
     except NotImplementedError:
         num_processes = 1 # Default to 1 if cpu_count() is not implemented
     print(f"Using {num_processes} worker processes.")
+    num_processes = 1
     results = main(num_processes)
 
 #%%
-    # Save results to CSV
-    csv_header = ['valve_19', 'valve_22', 'valve_16', 'valve_27', 'valve_31', 'valve_39','flow_35', 'flow_33', 'flow_5', 'flow_18', 'flow_9',
-                'pressure_22', 'pressure_15', 'pressure_4', 'pressure_3', 'pressure_8']
+    csv_header = ['valve_19', 'valve_22', 'valve_16', 'valve_27', 'valve_31', 'valve_39','node_2',
+                    'flow_35', 'flow_33', 'flow_5', 'flow_18', 'flow_9',
+                    'pressure_22', 'pressure_15', 'pressure_4', 'pressure_3', 'pressure_8']
     results_array = [[None] * len(csv_header) for _ in range(len(results))]
+
+#%%
+
     for i in range(len(results)):
         results_array[i][0] = results[i][0][0]
         results_array[i][1] = results[i][0][1]
@@ -143,18 +197,20 @@ if __name__ == "__main__":
         results_array[i][3] = results[i][0][3]
         results_array[i][4] = results[i][0][4]
         results_array[i][5] = results[i][0][5]
-        results_array[i][6] = results[i][1][0][0] * 1000 
-        results_array[i][7] = results[i][1][0][1] * 1000
-        results_array[i][8] = results[i][1][0][2] * 1000
-        results_array[i][9] = results[i][1][0][3] * 1000
-        results_array[i][10] = results[i][1][0][4] * 1000
-        results_array[i][11] = results[i][1][1][0]
-        results_array[i][12] = results[i][1][1][1]
-        results_array[i][13] = results[i][1][1][2]
-        results_array[i][14] = results[i][1][1][3]
-        results_array[i][15] = results[i][1][1][-1]
-
-        output_csv_file = "simulation_results.csv"
+        results_array[i][6] = results[i][0][6]
+        results_array[i][7] = results[i][1][0][0] * 1000 
+        results_array[i][8] = results[i][1][0][1] * 1000
+        results_array[i][9] = results[i][1][0][2] * 1000
+        results_array[i][10] = results[i][1][0][3] * 1000
+        results_array[i][11] = results[i][1][0][4] * 1000
+        results_array[i][12] = results[i][1][1][0]
+        results_array[i][13] = results[i][1][1][1]
+        results_array[i][14] = results[i][1][1][2]
+        results_array[i][15] = results[i][1][1][3]
+        results_array[i][16] = results[i][1][1][-1]
+    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_csv_file = f"simulation_results_{current_time}.csv"
+        # output_csv_file = "simulation_results.csv"
 
         # Save results_array to a CSV file
     with open(output_csv_file, mode='w', newline='') as file:
