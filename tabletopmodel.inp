@@ -22,7 +22,7 @@
  21              	1.2         	0           	                	;
  22              	1.2         	0           	                	;
  23              	1.2         	0           	                	;
- 24              	1.2         	0           	                	;
+ 24              	0           	0           	                	;
  25              	1.2         	0           	                	;
  27              	1           	0           	                	;
 
@@ -36,24 +36,22 @@
 [PIPES]
 ;ID              	Node1           	Node2           	Length      	Diameter    	Roughness   	MinorLoss   	Status
  2               	3               	2               	0.16        	26          	140         	0           	Open  	;
- 5               	5               	6               	0.65        	26          	140         	0           	Open  	;
- 8               	5               	4               	0.72        	26          	140         	0           	Open  	;
- 9               	6               	8               	0.7         	26          	140         	0           	Open  	;
- 15              	4               	10              	1           	26          	140         	0           	Open  	;
- 18              	11              	2               	0.51        	26          	140         	0           	Open  	;
+ 5               	5               	6               	0.65        	26          	140         	1.8         	Open  	;
+ 8               	5               	4               	0.72        	26          	140         	0.8         	Open  	;
+ 9               	6               	8               	0.7         	26          	140         	1.8         	Open  	;
+ 15              	4               	10              	1           	26          	140         	0.5         	Open  	;
+ 18              	11              	2               	0.51        	26          	140         	0.8         	Open  	;
  21              	9               	3               	0.6         	26          	140         	0           	Open  	;
- 23              	13              	5               	0.15        	26          	140         	0           	Open  	;
- 24              	14              	13              	0.2         	26          	140         	0           	Open  	;
- 25              	15              	14              	0.2         	26          	140         	0           	Open  	;
+ 23              	13              	5               	0.15        	26          	140         	0.6         	Open  	;
+ 24              	14              	13              	0.2         	26          	140         	0.8         	Open  	;
+ 25              	15              	14              	0.2         	26          	140         	0.8         	Open  	;
  50              	16              	15              	0.65        	26          	140         	0           	Open  	;
  28              	17              	18              	0.18        	26          	140         	0           	Open  	;
- 30              	20              	15              	0.7         	26          	140         	0           	Open  	;
- 32              	22              	21              	0.25        	26          	140         	0           	Open  	;
- 33              	22              	17              	0.63        	26          	140         	0           	Open  	;
+ 30              	20              	15              	0.7         	26          	140         	0.4         	Open  	;
+ 32              	22              	21              	0.25        	26          	140         	1.8         	Open  	;
+ 33              	22              	17              	0.63        	26          	140         	0.8         	Open  	;
  34              	23              	22              	0.45        	26          	140         	0           	Open  	;
  35              	24              	23              	1.67        	26          	140         	0           	Open  	;
- 1               	2               	7               	1.1         	26          	140         	0           	Open  	;
- 3               	27              	7               	1           	26          	140         	0           	Open  	;
 
 [PUMPS]
 ;ID              	Node1           	Node2           	Parameters
@@ -61,15 +59,16 @@
 
 [VALVES]
 ;ID              	Node1           	Node2           	Diameter    	Type	Setting     	MinorLoss   
- 16              	10              	3               	26         	TCV 	0           	0           	;
- 19              	6               	11              	26         	TCV 	0           	0           	;
- 22              	4               	9               	26         	TCV 	0           	0           	;
- 27              	17              	16              	26         	TCV 	0           	0           	;
- 31              	21              	20              	26         	TCV 	0           	0           	;
- 38              	18              	25              	26         	TCV 	0           	0           	;
- 39              	8               	27              	26         	TCV 	0           	0           	;
+ 16              	10              	3               	26          	TCV 	0.01        	0           	;
+ 19              	6               	11              	26          	TCV 	0.01        	0           	;
+ 22              	4               	9               	26          	TCV 	0.01        	0           	;
+ 27              	17              	16              	26          	TCV 	0.01        	0           	;
+ 31              	21              	20              	26          	TCV 	0.01        	0           	;
+ 38              	18              	25              	26          	TCV 	0           	0           	;
+ 39              	8               	27              	26          	TCV 	0.01        	0           	;
 
 [TAGS]
+ NODE 	2               	node_2
 
 [DEMANDS]
 ;Junction        	Demand      	Pattern         	Category
@@ -82,7 +81,7 @@
 
 [CURVES]
 ;ID              	X-Value     	Y-Value
-;PUMP: PUMP: PUMP: PUMP: PUMP: 
+;PUMP: PUMP: PUMP: PUMP: PUMP: PUMP: PUMP: PUMP: 
  1               	0           	5           
  1               	1.0         	3.5         
  1               	2.08        	0           
@@ -91,11 +90,7 @@
 
 
 
-
-
 [RULES]
-
-
 
 
 
@@ -106,6 +101,7 @@
 
 [EMITTERS]
 ;Junction        	Coefficient
+ 2               	2.2
 
 [QUALITY]
 ;Node            	InitQual
@@ -131,7 +127,7 @@
 
 [TIMES]
  Duration           	1:00 
- Hydraulic Timestep 	0:05 
+ Hydraulic Timestep 	1:00 
  Quality Timestep   	0:05 
  Pattern Timestep   	1:00 
  Pattern Start      	0:00 
@@ -158,6 +154,10 @@
  Unbalanced         	Continue 10
  Pattern            	1
  Demand Multiplier  	1.0
+ Demand Model       	PDA
+ Minimum Pressure   	0
+ Required Pressure  	0.1
+ Pressure Exponent  	0.5
  Emitter Exponent   	0.5
  Quality            	None mg/L
  Diffusivity        	1

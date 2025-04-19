@@ -10,7 +10,17 @@ import csv
 from datetime import datetime
 
 inp_file = 'tabletopmodel.inp'
-wn = wntr.network.WaterNetworkModel(inp_file)
+wn_inital = wntr.network.WaterNetworkModel(inp_file)
+wn_inital.options.hydraulic.demand_model = 'PDD'
+node = wn_inital.get_node('2')
+#  surface area of the pipe  = (0.26/2)^2 * pi 
+node.add_leak(wn_inital, area = 0.053)
+active_control_action = wntr.network.ControlAction(node, "leak_status", True)
+control = wntr.network.controls.Control._time_control(
+            wn_inital, 0, "SIM_TIME", False, active_control_action
+        )
+wn_inital.add_control("control1", control)
+wn = copy.deepcopy(wn_inital)  
 
 # these corresponds with where the flow and pressure sensors are located
 measurable_nodes = ['22', '15', '4', '3', '8']  
@@ -26,8 +36,8 @@ ids_to_modify = valve_ids_to_modify + node_ids_to_modify
 ids_to_modify = ['v'+x for x in valve_ids_to_modify] + ['n'+x for x in node_ids_to_modify]
 
 #start at 17.31
-def run_simulation(wn_copy, hours=2):
-    sim = wntr.sim.EpanetSimulator(wn_copy)
+def run_simulation(wn, hours=2):
+    sim = wntr.sim.WNTRSimulator(wn)
     results = sim.run_sim()
     flows = results.link['flowrate'].loc[hours*3600, :]    
     pressures = results.node['pressure'].loc[hours*3600, :]
@@ -57,23 +67,8 @@ def run_simulation_for_combination(settings_combination, hours=1):
         wn.reset_initial_values()
         # wn_copy = copy.deepcopy(wn)
         # node = wn_copy.get_node('2')
-        # # node.add_leak(wn_copy, area = 0.05, start_time=1, end_time=3600*hours)
-        # print(f"Process {os.getpid()}: BEFORE add_leak - Node '2' exists: {node is not None}")
-        # # Make sure the node is what we expect (Junction ideally)
-        # print(f"Process {os.getpid()}: Node '2' type: {type(node)}")
-        # print(f"Process {os.getpid()}: Node '2' initial leak_status: {getattr(node, 'leak_status', 'Not Set')}")
-        # print(f"Process {os.getpid()}: Node '2' initial emitter_coefficient: {getattr(node, 'emitter_coefficient', 'Not Set')}")
+        # node.add_leak(wn_copy, area = 0.05, start_time=1, end_time=3600*hours)
 
-
-        # # === THE CALL ===
-        # node.add_leak(wn_copy, area=0.5, start_time=1, end_time=3600*hours)
-        # # ================
-
-        # print(f"Process {os.getpid()}: AFTER add_leak - Node '2' leak_status: {getattr(node, 'leak_status', 'Not Set')}")
-        # print(f"Process {os.getpid()}: Node '2' leak_area: {getattr(node, 'leak_area', 'Not Set')}")
-        # print(f"Process {os.getpid()}: Node '2' emitter_coefficient after add_leak: {getattr(node, 'emitter_coefficient', 'Not Set')}")
-
-        # print(f"Process {os.getpid()}: CONTROLS in wn_copy:")
         # 2. Apply the settings for this specific combination
         for id, setting in zip(ids_to_modify, settings_combination):
             id_number = id[1:]
@@ -141,6 +136,7 @@ def main(num_processes=1, hours=1, random_combinations=1_000_000):
     #         except Exception as e:       
     #             print(f"Error processing future for combination: {e}") 
     # 2. Create the pool and map the worker function to the combinations
+    
     with multiprocessing.Pool(processes=num_processes) as pool:
         # pool.map applies 'run_simulation_for_combination' to each item
         # in 'all_combinations' and distributes the work across processes.
@@ -179,7 +175,7 @@ if __name__ == "__main__":
     except NotImplementedError:
         num_processes = 1 # Default to 1 if cpu_count() is not implemented
     print(f"Using {num_processes} worker processes.")
-    num_processes = 1
+    # num_processes = 1
     results = main(num_processes)
 
 #%%
