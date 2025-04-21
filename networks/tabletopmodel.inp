@@ -24,7 +24,7 @@
  23              	1.2         	0           	                	;
  24              	0           	0           	                	;
  25              	1.2         	0           	                	;
- 27              	1           	0           	                	;
+ 27              	1           	2            	                	;
 
 [RESERVOIRS]
 ;ID              	Head        	Pattern         
@@ -64,11 +64,10 @@
  22              	4               	9               	26          	TCV 	0.01        	0           	;
  27              	17              	16              	26          	TCV 	0.01        	0           	;
  31              	21              	20              	26          	TCV 	0.01        	0           	;
- 38              	18              	25              	26          	TCV 	0           	0           	;
+ 38              	18              	25              	26          	TCV 	0.01        	0           	;
  39              	8               	27              	26          	TCV 	0.01        	0           	;
 
 [TAGS]
- NODE 	2               	node_2
 
 [DEMANDS]
 ;Junction        	Demand      	Pattern         	Category
@@ -81,7 +80,7 @@
 
 [CURVES]
 ;ID              	X-Value     	Y-Value
-;PUMP: PUMP: PUMP: PUMP: PUMP: PUMP: PUMP: PUMP: 
+;PUMP: PUMP: PUMP: PUMP: PUMP: PUMP: 
  1               	0           	5           
  1               	1.0         	3.5         
  1               	2.08        	0           
@@ -90,7 +89,13 @@
 
 
 
+
+
+
 [RULES]
+
+
+
 
 
 
@@ -102,6 +107,7 @@
 [EMITTERS]
 ;Junction        	Coefficient
  2               	2.2
+ 27              	0
 
 [QUALITY]
 ;Node            	InitQual
