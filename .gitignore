@@ -2,3 +2,4 @@ ctown.inp
 .venv/*
 .vscode/*
 dataset_output/*
+models/*
