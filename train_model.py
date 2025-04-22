@@ -70,10 +70,12 @@ class NeuralNetwork(nn.Module):
         return logits
 #%%
 # Split the dataset into training, validation, and test sets
-dataset = SimulationDataset()
-train_size = int(0.7 * len(dataset))
-val_size = int(0.15 * len(dataset))
+dataset = SimulationDataset(file_path)
+train_size = int(0.003 * len(dataset))
+val_size = int(0.0005 * len(dataset))
 test_size = len(dataset) - train_size - val_size
+
+print(f"Train size: {train_size}, Validation size: {val_size}, Test size: {test_size}")
 
 train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(
     dataset, [train_size, val_size, test_size]
@@ -82,6 +84,7 @@ train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+
 #%%
 model = NeuralNetwork().to(device)
 mse_loss = nn.MSELoss()
@@ -141,7 +144,9 @@ with torch.no_grad():
     for batch in test_loader:
         x, y = batch
         x, y = x.to(device), y.to(device)
-
+        if torch.any(torch.isnan(x)) or torch.any(torch.isnan(y)):
+            print("Encountered NaN values in the dataset.")
+            # continue
         predictions = model(x)
         # Calculate Mean Absolute Error (MAE)
         MAE.append(torch.mean(torch.abs(predictions - y)).item())
