@@ -63,11 +63,14 @@ test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 #%%
 model = NeuralNetwork().to(device)
 mse_loss = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
-epochs = 50
-
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
+epochs = 500
+loss_history = []
+#%%
 for epoch in range(epochs):
     model.train()
+    _loss_history = []
+    _validation_loss_history = []
     for batch in train_loader:
         x, y = batch
         x, y = x.to(device), y.to(device)
@@ -77,10 +80,10 @@ for epoch in range(epochs):
         loss = mse_loss(logits, y)
         loss.backward()
         optimizer.step()
-
-    if epoch % 10 == 0:
-        print(f"Epoch {epoch}, Loss: {loss.item()}")
-        
+        _loss_history.append(loss.item())
+    if epoch % 25 == 0:
+        print(f"Epoch {epoch}, Loss: {np.mean(_loss_history)}")
+        loss_history.append(np.mean(_loss_history))
         average_loss = 0.0
         for batch in val_loader:
             x, y = batch
@@ -91,7 +94,20 @@ for epoch in range(epochs):
                 val_loss = mse_loss(logits, y)
                 average_loss += val_loss.item()
         average_loss /= len(val_loader)
+        _validation_loss_history.append(average_loss)
         print(f"Validation Loss: {average_loss}")
+
+import matplotlib.pyplot as plt
+
+# Plot the loss history over time
+plt.figure(figsize=(10, 6))
+plt.plot(loss_history, label="Training Loss")
+plt.xlabel("Iterations")
+plt.ylabel("Loss")
+plt.title("Training Loss History")
+plt.legend()
+plt.grid(True)
+plt.show()
 
 #%%
 # Calculate accuracy on the training set
