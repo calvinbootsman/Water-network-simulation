@@ -159,22 +159,35 @@ model_save_path = f"models/trained_model_{average_MAE}.pth"
 torch.save(model.state_dict(), model_save_path)
 print(f"Model saved to {model_save_path}")
 
-# %%
-input_dataset = simulation_results[['flow_35', 'flow_33', 'flow_5', 'flow_18', 'pressure_22', 'pressure_15', 'pressure_4', 'pressure_3']].values
-output_dataset = simulation_results[['flow_9', 'pressure_8']].values
-input_tensor = torch.tensor(input_dataset, dtype=torch.float32, device=device)
-output_tensor = torch.tensor(output_dataset, dtype=torch.float32, device=device)
-
+#%%
 model.eval()
-# Sample a few random items from the dataset
+num_samples_to_show = 5
 
-sample_indices = random.sample(range(len(input_tensor)), 5)
-sample_inputs = input_tensor[sample_indices]
-sample_outputs = output_tensor[sample_indices]
+# Get random indices from the full dataset
+# Ensure indices are unique and within the bounds of the dataset
+if len(dataset) >= num_samples_to_show:
+    random_indices = random.sample(range(len(dataset)), num_samples_to_show)
+else:
+    print(f"Warning: Requested {num_samples_to_show} samples, but dataset only has {len(dataset)} entries. Showing all.")
+    random_indices = list(range(len(dataset)))
 
-print("Sample Inputs:", sample_inputs)
-print("Sample Outputs:", sample_outputs)
+print(f"\n--- Comparing {num_samples_to_show} Random Samples ---")
+
 with torch.no_grad():
-    predictions = model(input_tensor)
-    predicted_outputs = predictions[sample_indices]
-    print("Predicted Outputs:", predicted_outputs)
+    for i, idx in enumerate(random_indices):
+        x_norm, y_norm = dataset[idx]
+        x_norm_batch = x_norm.unsqueeze(0)
+
+        prediction_norm = model(x_norm_batch) # Shape is [1, 2]
+        prediction_denorm = dataset.denormalize_output(prediction_norm)
+        actual_denorm = dataset.denormalize_output(y_norm.unsqueeze(0)) # Use unsqueeze for potential consistency
+        original_input_features = dataset.original_dataset[idx, :8]
+
+        print(f"\nSample #{i+1} (Dataset Index: {idx})")
+        # Use numpy for potentially cleaner printing of arrays
+        print(f"  Input Features (Original): {np.array2string(original_input_features, precision=4, suppress_small=True)}")
+        # Move tensors to CPU and convert to numpy for printing
+        print(f"  Predicted Output (Denormalized): {np.array2string(prediction_denorm.cpu().numpy(), precision=4, suppress_small=True)}")
+        print(f"  Actual Output    (Denormalized): {np.array2string(actual_denorm.cpu().numpy(), precision=4, suppress_small=True)}")
+
+print("\n--------------------------------------")
