@@ -89,8 +89,13 @@ test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 model = NeuralNetwork().to(device)
 mse_loss = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
-epochs = 500
+epochs = 5000
 loss_history = []
+
+max_no_improvement = 6
+no_improvement_count = 0
+best_val_loss = float('inf')
+early_stopping = False
 #%%
 for epoch in range(epochs):
     model.train()
@@ -121,7 +126,18 @@ for epoch in range(epochs):
         average_loss /= len(val_loader)
         _validation_loss_history.append(average_loss)
         print(f"Validation Loss: {average_loss}")
-
+        if average_loss < best_val_loss:
+            best_val_loss = average_loss
+            no_improvement_count = 0
+        else:
+            no_improvement_count += 1
+            if no_improvement_count >= max_no_improvement:
+                print(f"Early stopping at epoch {epoch}")
+                early_stopping = True
+                break
+    if early_stopping:
+        print(f"Early stopping triggered at epoch {epoch}")
+        break
 import matplotlib.pyplot as plt
 
 # Plot the loss history over time
