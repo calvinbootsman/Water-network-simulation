@@ -4,22 +4,44 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 import random
+import numpy as np
 # Load the CSV file into a pandas DataFrame
-file_path = 'simulation_results.csv'
+directory = 'dataset_output'
+file_name = 'good_dataset_20250421_174438.csv'
+file_path = f"{directory}/{file_name}"
 simulation_results = pd.read_csv(file_path)
-print(simulation_results.head())
+# print(simulation_results.head())
 
 #%%
 device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
 print(f"Using {device} device")
 
 class SimulationDataset(torch.utils.data.Dataset):
-    def __init__(self, file_location='simulation_results.csv'):
-        simulation_results = pd.read_csv(file_path)
-        dataset = simulation_results[['flow_35', 'flow_33', 'flow_5', 'flow_18', 'pressure_22', 'pressure_15', 'pressure_4', 'pressure_3', 'flow_9', 'pressure_8']].values
-
+    def __init__(self, file_location='simulation_results.csv', normalize=True):
+        simulation_results = pd.read_csv(file_location)
+        dataset = simulation_results[['flow_35', 'flow_33', 'flow_5', 'flow_18', 'pressure_22', 'pressure_15', 'pressure_4', 'pressure_3', 'flow_9', 'pressure_8']].values # should also add node_27
+        # Remove rows with NaN values
+        dataset = dataset[~pd.isna(dataset).any(axis=1)]
+        self.original_dataset = dataset.copy()
+        self.min_values = dataset.min(axis=0)
+        self.max_values = dataset.max(axis=0)
+        if normalize:
+            # Normalize the dataset
+            dataset = (dataset - self.min_values) / (self.max_values - self.min_values)
         self.data = torch.tensor(dataset, dtype=torch.float32, device=device)
 
+    def denormalize(self, dataset):
+        # Denormalize the dataset to the original range
+        dataset = dataset * (self.max_values - self.min_values) + self.min_values
+        return dataset
+    
+    def denormalize_output(self, data):
+        # Denormalize the output data to the original range
+        _max_values = torch.tensor(self.max_values, dtype=torch.float32, device=device)
+        _min_values = torch.tensor(self.min_values, dtype=torch.float32, device=device)
+        data = data * (_max_values[8:] - _min_values[8:]) + _min_values[8:]
+        return data
+    
     def __len__(self):
         return len(self.data)
 
