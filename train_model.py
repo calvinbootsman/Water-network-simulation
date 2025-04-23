@@ -88,7 +88,11 @@ test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 #%%
 model = NeuralNetwork().to(device)
 mse_loss = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
+loss_function = mse_loss
+
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+max_no_improvement = 5
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.3, patience=max_no_improvement)
 epochs = 5000
 loss_history = []
 
@@ -101,16 +105,18 @@ for epoch in range(epochs):
     model.train()
     _loss_history = []
     _validation_loss_history = []
+    # train
     for batch in train_loader:
         x, y = batch
         x, y = x.to(device), y.to(device)
 
         optimizer.zero_grad()
         logits = model(x)
-        loss = mse_loss(logits, y)
+        loss = loss_function(logits, y)
         loss.backward()
         optimizer.step()
         _loss_history.append(loss.item())
+    # validation
     if epoch % 25 == 0:
         print(f"Epoch {epoch}, Loss: {np.mean(_loss_history)}")
         loss_history.append(np.mean(_loss_history))
@@ -121,7 +127,7 @@ for epoch in range(epochs):
 
             with torch.no_grad():
                 logits = model(x)
-                val_loss = mse_loss(logits, y)
+                val_loss = loss_function(logits, y)
                 average_loss += val_loss.item()
         average_loss /= len(val_loader)
         _validation_loss_history.append(average_loss)
@@ -129,15 +135,9 @@ for epoch in range(epochs):
         if average_loss < best_val_loss:
             best_val_loss = average_loss
             no_improvement_count = 0
-        else:
-            no_improvement_count += 1
-            if no_improvement_count >= max_no_improvement:
-                print(f"Early stopping at epoch {epoch}")
-                early_stopping = True
-                break
-    if early_stopping:
-        print(f"Early stopping triggered at epoch {epoch}")
-        break
+
+        scheduler.step(val_loss)
+    
 import matplotlib.pyplot as plt
 
 # Plot the loss history over time
@@ -156,6 +156,7 @@ model.eval()
 correct_predictions = 0
 total_predictions = 0
 MAE = []
+MAPE = []
 with torch.no_grad():
     for batch in test_loader:
         x, y = batch
@@ -166,14 +167,21 @@ with torch.no_grad():
         predictions = model(x)
         # Calculate Mean Absolute Error (MAE)
         MAE.append(torch.mean(torch.abs(predictions - y)).item())
-
+        # Calculate Mean Absolute Percentage Error (MAPE)
+        predictions = predictions.clamp(min=1e-8)  # Avoid division by zero
+        y = y.clamp(min=1e-8)  # Avoid division by zero
+        MAPE.append(torch.mean(torch.abs((predictions - y) / y)).item())
         # predicted_labels = predictions.round()  # Round predictions to nearest integer
         # correct_predictions += (predicted_labels == y).all(dim=1).sum().item()
         # total_predictions += y.size(0)
 
 average_MAE = sum(MAE) / len(MAE)
+average_MAPE = sum(MAPE) / len(MAPE)
 print(f"Average MAE on training set: {average_MAE}")
 print(f'Precision: {100.00 - (average_MAE * 100.00):.2f}%')
+print(f"Average MAPE on training set: {average_MAPE}")
+print(f'Precision: {100.00 - (average_MAPE * 100.00):.2f}%')
+
 #%%
 # Save the trained model
 model_save_path = f"models/trained_model_{average_MAE}.pth"
